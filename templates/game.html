@@ -60,9 +60,10 @@
   <!-- JavaScript -->
   <script>
     // Initialize variables from Flask
-    const room = "{{ room }}";
-    const playerName = "{{ name }}";
-    const playerSign = "{{ sign }}";
+    const urlParams = new URLSearchParams(window.location.search);
+    const room = urlParams.get('room') || "{{ room }}";
+    const playerName = urlParams.get('name') || "{{ name }}";
+    const playerSign = urlParams.get('sign') || "{{ sign }}";
 
     // Opponent info
     let opponentName = '';
