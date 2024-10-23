@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic-Tac-Toe - Join Game</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-800 text-white flex items-center justify-center min-h-screen">
+  <div class="w-full max-w-md">
+    <h1 class="text-4xl font-bold mb-6 text-center">Join or Create a Game</h1>
+    <form method="POST" class="bg-gray-700 p-8 rounded-lg">
+      <div class="mb-4">
+        <label class="block mb-2">Your Name</label>
+        <input type="text" name="name" class="w-full p-2 rounded bg-gray-600 text-white" required>
+      </div>
+      <div class="mb-4">
+        <label class="block mb-2">Game Room ID (Optional)</label>
+        <input type="text" name="room" class="w-full p-2 rounded bg-gray-600 text-white">
+        <p class="text-sm text-gray-400 mt-1">Leave blank to create a new game.</p>
+      </div>
+      <div class="mb-6">
+        <label class="block mb-2">Choose Your Sign</label>
+        <select name="sign" class="w-full p-2 rounded bg-gray-600 text-white" required>
+          <option value="X">X</option>
+          <option value="O">O</option>
+        </select>
+      </div>
+      <button type="submit" class="w-full bg-blue-500 p-2 rounded">Start Game</button>
+    </form>
+  </div>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic-Tac-Toe</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+<body class="bg-gray-800 text-white flex flex-col items-center min-h-screen p-4">
+  <!-- Game Title -->
+  <h1 class="text-4xl font-bold mb-4">Tic-Tac-Toe</h1>
+
+  <!-- Win Streak Board -->
+  <div class="w-full max-w-lg flex justify-around mb-4">
+    <div>
+      <p>{{ name }} ({{ sign }}): <span id="your-streak">0</span> Streak</p>
+    </div>
+    <div>
+      <p id="opponent-info">Waiting for opponent...</p>
+      <p>Streak: <span id="opponent-streak">0</span></p>
+    </div>
+  </div>
+
+  <!-- Game Board -->
+  <div id="board" class="grid grid-cols-3 gap-2 w-full max-w-sm mx-auto">
+    <!-- Cells -->
+    {% for i in range(9) %}
+    <div class="cell border p-4 cursor-pointer text-3xl bg-gray-700" id="cell-{{ i }}"></div>
+    {% endfor %}
+  </div>
+
+  <!-- Controls and Share Link -->
+  <div class="mt-4 flex flex-col items-center">
+    <button id="restart" class="bg-blue-500 text-white p-2 rounded mb-4">Restart Game</button>
+    <div class="flex items-center">
+      <button id="share-button" class="bg-gray-700 text-white p-2 rounded mr-2">Share to Play</button>
+      <button id="copy-link" class="ml-2 text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4m0 0l4-4m-4 4H3" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Chat Section -->
+  <div class="mt-6 w-full max-w-lg">
+    <h3 class="text-2xl mb-4">Chat</h3>
+    <div id="chat-box" class="bg-gray-900 p-4 h-40 overflow-y-scroll mb-2"></div>
+    <input type="text" id="chat-input" class="w-full p-2 bg-gray-700 text-white" placeholder="Type a message..." autocomplete="off">
+  </div>
+
+  <!-- Notification Modal -->
+  <div id="notification-modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+    <div class="bg-white p-6 rounded-lg text-black text-center">
+      <p id="notification-message" class="text-xl"></p>
+      <button id="close-notification" class="mt-4 bg-blue-500 text-white p-2 rounded">Close</button>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // Initialize variables from Flask
+    const room = "{{ room }}";
+    const playerName = "{{ name }}";
+    const playerSign = "{{ sign }}";
+
+    // Opponent info
+    let opponentName = '';
+    let opponentSign = '';
+
+    // Socket.io initialization
+    const socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+
+    // Join the room
+    socket.emit('join', { room, playerName, playerSign });
+
+    // Game variables
+    let currentPlayer = 'X';
+    let board = Array(9).fill(null);
+    let yourStreak = parseInt(localStorage.getItem('yourStreak')) || 0;
+    let opponentStreak = 0;
+
+    // Update streak display
+    document.getElementById('your-streak').innerText = yourStreak;
+
+    // Share link functionality
+    const shareButton = document.getElementById('share-button');
+    const copyLinkButton = document.getElementById('copy-link');
+    const shareLink = `${location.origin}/game?room=${room}&name=Opponent&sign=${playerSign === 'X' ? 'O' : 'X'}`;
+
+    shareButton.addEventListener('click', () => {
+      showNotification(`Share this link with your friend to play: ${shareLink}`);
+    });
+
+    copyLinkButton.addEventListener('click', () => {
+      navigator.clipboard.writeText(shareLink).then(() => {
+        showNotification('Link copied to clipboard!');
+      });
+    });
+
+    // Handle cell clicks
+    document.querySelectorAll('.cell').forEach((cell, idx) => {
+      cell.addEventListener('click', () => {
+        if (!board[idx] && currentPlayer === playerSign) {
+          board[idx] = playerSign;
+          cell.innerText = playerSign;
+          socket.emit('move', { room, index: idx, sign: playerSign });
+          checkGameStatus();
+        }
+      });
+    });
+
+    // Receive updates from server
+    socket.on('update_board', (data) => {
+      if (data.sign !== playerSign) {
+        board[data.index] = data.sign;
+        document.getElementById(`cell-${data.index}`).innerText = data.sign;
+        checkGameStatus();
+      }
+    });
+
+    // Handle player joined
+    socket.on('player_joined', (data) => {
+      if (data.playerName !== playerName) {
+        opponentName = data.playerName;
+        opponentSign = data.playerSign;
+        document.getElementById('opponent-info').innerText = `${opponentName} (${opponentSign})`;
+        opponentStreak = 0;
+        document.getElementById('opponent-streak').innerText = opponentStreak;
+      }
+    });
+
+    // Chat functionality
+    const chatInput = document.getElementById('chat-input');
+    const chatBox = document.getElementById('chat-box');
+
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+        const message = chatInput.value.trim();
+        socket.emit('chat', { room, message, sender: playerName });
+        chatInput.value = '';
+      }
+    });
+
+    socket.on('new_chat', (data) => {
+      const messageElement = document.createElement('p');
+      messageElement.innerHTML = `<strong>${data.sender}:</strong> ${data.message}`;
+      chatBox.appendChild(messageElement);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    // Restart game functionality
+    document.getElementById('restart').addEventListener('click', () => {
+      socket.emit('restart_game', { room });
+    });
+
+    socket.on('game_restarted', () => {
+      board = Array(9).fill(null);
+      document.querySelectorAll('.cell').forEach(cell => {
+        cell.innerText = '';
+        cell.classList.remove('bg-green-500');
+      });
+      currentPlayer = 'X';
+    });
+
+    // Check game status
+    function checkGameStatus() {
+      const winner = checkWinner();
+      if (winner) {
+        if (winner === playerSign) {
+          yourStreak++;
+          localStorage.setItem('yourStreak', yourStreak);
+          document.getElementById('your-streak').innerText = yourStreak;
+          showNotification(`Congratulations ${playerName}, you win!`);
+        } else {
+          opponentStreak++;
+          document.getElementById('opponent-streak').innerText = opponentStreak;
+          showNotification(`${opponentName} wins the game!`);
+        }
+        highlightWinningCells(winner);
+      } else if (board.every(cell => cell !== null)) {
+        // It's a tie
+        showNotification("It's a tie!");
+      } else {
+        // Continue game
+        currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
+      }
+    }
+
+    // Check for a winner
+    function checkWinner() {
+      const winningCombinations = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+      ];
+      for (let combo of winningCombinations) {
+        const [a, b, c] = combo;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return board[a];
+        }
+      }
+      return null;
+    }
+
+    // Highlight winning cells
+    function highlightWinningCells(winnerSign) {
+      const winningCombinations = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+      ];
+      for (let combo of winningCombinations) {
+        const [a, b, c] = combo;
+        if (board[a] === winnerSign && board[b] === winnerSign && board[c] === winnerSign) {
+          document.getElementById(`cell-${a}`).classList.add('bg-green-500');
+          document.getElementById(`cell-${b}`).classList.add('bg-green-500');
+          document.getElementById(`cell-${c}`).classList.add('bg-green-500');
+        }
+      }
+    }
+
+    // Show notification
+    function showNotification(message) {
+      document.getElementById('notification-message').innerText = message;
+      document.getElementById('notification-modal').classList.remove('hidden');
+    }
+
+    document.getElementById('close-notification').addEventListener('click', () => {
+      document.getElementById('notification-modal').classList.add('hidden');
+    });
+
+    // Clear chat on refresh
+    window.onbeforeunload = function() {
+      localStorage.removeItem('chatHistory');
+    };
+  </script>
+</body>
+</html>
