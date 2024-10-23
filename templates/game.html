@@ -2,18 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tic-Tac-Toe</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  <style>
+    /* Additional mobile styling */
+    #board {
+      grid-template-columns: repeat(3, minmax(80px, 1fr)); /* Ensure cells resize appropriately */
+    }
+    .cell {
+      min-width: 80px; /* Minimum size for mobile */
+      min-height: 80px;
+    }
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 2rem; /* Adjust title size for smaller screens */
+      }
+      #board {
+        gap: 0.5rem; /* Decrease spacing between cells on small screens */
+      }
+      .cell {
+        padding: 1rem; /* Increase tap area */
+        font-size: 2rem; /* Adjust font size for better visibility on mobile */
+      }
+      #chat-input {
+        font-size: 1rem; /* Ensure chat input is easy to type on mobile */
+      }
+    }
+  </style>
 </head>
 <body class="bg-gray-800 text-white flex flex-col items-center min-h-screen p-4">
   <!-- Game Title -->
   <h1 class="text-4xl font-bold mb-4">Tic-Tac-Toe</h1>
 
   <!-- Win Streak Board -->
-  <div class="w-full max-w-lg flex justify-around mb-4">
+  <div class="w-full max-w-lg flex justify-around mb-4 text-center">
     <div>
-      <p>{{ name }} ({{ sign }}): <span id="your-streak">0</span> Streak</p>
+      <p id="your-info">{{ name }} ({{ sign }}): <span id="your-streak">0</span> Streak</p>
     </div>
     <div>
       <p id="opponent-info">Waiting for opponent...</p>
@@ -23,7 +49,6 @@
 
   <!-- Game Board -->
   <div id="board" class="grid grid-cols-3 gap-2 w-full max-w-sm mx-auto">
-    <!-- Cells -->
     {% for i in range(9) %}
     <div class="cell border p-4 cursor-pointer text-3xl bg-gray-700" id="cell-{{ i }}"></div>
     {% endfor %}
@@ -60,12 +85,10 @@
   <!-- JavaScript -->
   <script>
     // Initialize variables from Flask
-    const urlParams = new URLSearchParams(window.location.search);
-    const room = urlParams.get('room') || "{{ room }}";
-    const playerName = urlParams.get('name') || "{{ name }}";
-    const playerSign = urlParams.get('sign') || "{{ sign }}";
+    const room = "{{ room }}";
+    const playerName = "{{ name }}";
+    const playerSign = "{{ sign }}";
 
-    // Opponent info
     let opponentName = '';
     let opponentSign = '';
 
@@ -183,7 +206,6 @@
         // It's a tie
         showNotification("It's a tie!");
       } else {
-        // Continue game
         currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
       }
     }
