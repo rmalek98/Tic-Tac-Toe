@@ -2,31 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Tic-Tac-Toe - Join Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Start a New Game</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
 </head>
-<body class="bg-gray-800 text-white flex items-center justify-center min-h-screen">
-  <div class="w-full max-w-md">
-    <h1 class="text-4xl font-bold mb-6 text-center">Join or Create a Game</h1>
-    <form method="POST" class="bg-gray-700 p-8 rounded-lg">
-      <div class="mb-4">
-        <label class="block mb-2">Your Name</label>
-        <input type="text" name="name" class="w-full p-2 rounded bg-gray-600 text-white" required>
-      </div>
-      <div class="mb-4">
-        <label class="block mb-2">Game Room ID (Optional)</label>
-        <input type="text" name="room" class="w-full p-2 rounded bg-gray-600 text-white">
-        <p class="text-sm text-gray-400 mt-1">Leave blank to create a new game.</p>
-      </div>
-      <div class="mb-6">
-        <label class="block mb-2">Choose Your Sign</label>
-        <select name="sign" class="w-full p-2 rounded bg-gray-600 text-white" required>
-          <option value="X">X</option>
-          <option value="O">O</option>
-        </select>
-      </div>
-      <button type="submit" class="w-full bg-blue-500 p-2 rounded">Start Game</button>
+<body class="bg-gray-800 text-white flex flex-col items-center min-h-screen p-4">
+  <h1 class="text-4xl font-bold mb-4">Tic-Tac-Toe</h1>
+
+  <div class="bg-gray-900 p-6 rounded-lg w-full max-w-lg">
+    <h2 class="text-2xl mb-4">Start a New Game</h2>
+    <form id="start-form" class="flex flex-col space-y-4">
+      <input type="text" id="player-name" class="p-2 bg-gray-700 text-white rounded" placeholder="Enter your name" required>
+      <input type="text" id="room-id" class="p-2 bg-gray-700 text-white rounded" placeholder="Enter or create a room ID" required>
+      <button type="submit" class="bg-blue-500 text-white p-2 rounded">Start Game</button>
     </form>
   </div>
+
+  <!-- Instructions Button -->
+  <div class="mt-6">
+    <button id="instructions-button" class="bg-gray-700 text-white p-2 rounded">How to Play</button>
+  </div>
+
+  <!-- Instructions Modal -->
+  <div id="instructions-modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+    <div class="bg-white p-6 rounded-lg text-black max-w-md">
+      <h2 class="text-2xl mb-4">Game Instructions</h2>
+      <p>Start by entering your name and room ID. You will get a link to share with your opponent, who can join the game by entering the same room ID.</p>
+      <p>The winner gets to restart the game. If it's a tie, the last winner can restart. After 10 rounds, players will be asked if they want to continue.</p>
+      <button id="close-instructions" class="mt-4 bg-blue-500 text-white p-2 rounded">Close</button>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    const startForm = document.getElementById('start-form');
+    const instructionsModal = document.getElementById('instructions-modal');
+    const instructionsButton = document.getElementById('instructions-button');
+    const closeInstructions = document.getElementById('close-instructions');
+
+    startForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const playerName = document.getElementById('player-name').value;
+      const roomId = document.getElementById('room-id').value;
+      const gameLink = `${location.origin}/game?room=${roomId}&name=${playerName}&sign=X`;
+      window.location.href = gameLink; // Redirect to the game with the room ID
+    });
+
+    instructionsButton.addEventListener('click', () => {
+      instructionsModal.classList.remove('hidden');
+    });
+
+    closeInstructions.addEventListener('click', () => {
+      instructionsModal.classList.add('hidden');
+    });
+  </script>
 </body>
 </html>
