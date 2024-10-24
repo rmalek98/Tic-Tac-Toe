@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit, join_room
 import uuid
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Replace with your secret key
 socketio = SocketIO(app)
 
 @app.route('/', methods=['GET', 'POST'])
@@ -11,14 +12,22 @@ def index():
         name = request.form.get('name')
         room = request.form.get('room') or str(uuid.uuid4())
         sign = request.form.get('sign')
-        return redirect(url_for('game', room=room, name=name, sign=sign))
+        session['name'] = name
+        session['room'] = room
+        session['sign'] = sign
+        return redirect(url_for('game'))
     return render_template('index.html')
 
-@app.route('/game')
+@app.route('/game', methods=['GET', 'POST'])
 def game():
-    room = request.args.get('room')
-    name = request.args.get('name')
-    sign = request.args.get('sign')
+    if request.method == 'POST':
+        name = request.form.get('name')
+        session['name'] = name
+    room = session.get('room')
+    name = session.get('name')
+    sign = session.get('sign')
+    if not room or not name or not sign:
+        return redirect(url_for('index'))
     return render_template('game.html', room=room, name=name, sign=sign)
 
 @socketio.on('join')
@@ -43,4 +52,4 @@ def on_restart(data):
     emit('game_restarted', to=room)
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app)

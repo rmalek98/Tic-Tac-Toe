@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Start a New Game</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -26,13 +25,13 @@
         <option value="X">X</option>
         <option value="O">O</option>
       </select>
-      <button type="submit" class="bg-blue-500 text-white p-2 rounded">Start Game</button>
+      <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">Start Game</button>
     </form>
   </div>
 
   <!-- Instructions Button -->
   <div class="mt-6">
-    <button id="instructions-button" class="bg-gray-700 text-white p-2 rounded">How to Play</button>
+    <button id="instructions-button" class="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded">How to Play</button>
   </div>
 
   <!-- Instructions Modal -->
@@ -41,7 +40,7 @@
       <h2 class="text-2xl mb-4">Game Instructions</h2>
       <p class="mb-4">Start by entering your name, room ID, and choosing your sign (X or O). You'll receive a link to share with your opponent, who can join the game by entering the same room ID and their name.</p>
       <p class="mb-4">The winner of each round gets to restart the game. If it's a tie, the last winner can restart. After 10 rounds, players will be asked if they want to continue.</p>
-      <button id="close-instructions" class="mt-4 bg-blue-500 text-white p-2 rounded">Close</button>
+      <button id="close-instructions" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">Close</button>
     </div>
   </div>
 
