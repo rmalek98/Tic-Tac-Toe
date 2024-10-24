@@ -21,6 +21,11 @@
     <form id="start-form" class="flex flex-col space-y-4">
       <input type="text" id="player-name" class="p-2 bg-gray-700 text-white rounded" placeholder="Enter your name" required>
       <input type="text" id="room-id" class="p-2 bg-gray-700 text-white rounded" placeholder="Enter or create a room ID" required>
+      <select id="player-sign" class="p-2 bg-gray-700 text-white rounded" required>
+        <option value="" disabled selected>Select your sign</option>
+        <option value="X">X</option>
+        <option value="O">O</option>
+      </select>
       <button type="submit" class="bg-blue-500 text-white p-2 rounded">Start Game</button>
     </form>
   </div>
@@ -34,8 +39,8 @@
   <div id="instructions-modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
     <div class="bg-white p-6 rounded-lg text-black max-w-md">
       <h2 class="text-2xl mb-4">Game Instructions</h2>
-      <p>Start by entering your name and room ID. You will get a link to share with your opponent, who can join the game by entering the same room ID.</p>
-      <p>The winner gets to restart the game. If it's a tie, the last winner can restart. After 10 rounds, players will be asked if they want to continue.</p>
+      <p class="mb-4">Start by entering your name, room ID, and choosing your sign (X or O). You'll receive a link to share with your opponent, who can join the game by entering the same room ID and their name.</p>
+      <p class="mb-4">The winner of each round gets to restart the game. If it's a tie, the last winner can restart. After 10 rounds, players will be asked if they want to continue.</p>
       <button id="close-instructions" class="mt-4 bg-blue-500 text-white p-2 rounded">Close</button>
     </div>
   </div>
@@ -49,9 +54,10 @@
 
     startForm.addEventListener('submit', function(event) {
       event.preventDefault();
-      const playerName = document.getElementById('player-name').value;
-      const roomId = document.getElementById('room-id').value;
-      const gameLink = `${location.origin}/game?room=${roomId}&name=${playerName}&sign=X`;
+      const playerName = encodeURIComponent(document.getElementById('player-name').value);
+      const roomId = encodeURIComponent(document.getElementById('room-id').value);
+      const playerSign = document.getElementById('player-sign').value;
+      const gameLink = `${location.origin}/game.html?room=${roomId}&name=${playerName}&sign=${playerSign}`;
       window.location.href = gameLink; // Redirect to the game with the room ID
     });
 
