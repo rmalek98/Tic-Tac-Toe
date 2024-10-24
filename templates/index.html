@@ -18,10 +18,10 @@
 
   <div class="bg-gray-900 p-6 rounded-lg w-full max-w-lg">
     <h2 class="text-2xl mb-4">Start a New Game</h2>
-    <form id="start-form" class="flex flex-col space-y-4">
-      <input type="text" id="player-name" class="p-2 bg-gray-700 text-white rounded" placeholder="Enter your name" required>
-      <input type="text" id="room-id" class="p-2 bg-gray-700 text-white rounded" placeholder="Enter or create a room ID" required>
-      <select id="player-sign" class="p-2 bg-gray-700 text-white rounded" required>
+    <form method="POST" class="flex flex-col space-y-4">
+      <input type="text" name="name" class="p-2 bg-gray-700 text-white rounded" placeholder="Enter your name" required>
+      <input type="text" name="room" class="p-2 bg-gray-700 text-white rounded" placeholder="Enter or create a room ID" required>
+      <select name="sign" class="p-2 bg-gray-700 text-white rounded" required>
         <option value="" disabled selected>Select your sign</option>
         <option value="X">X</option>
         <option value="O">O</option>
@@ -47,19 +47,9 @@
 
   <!-- JavaScript -->
   <script>
-    const startForm = document.getElementById('start-form');
     const instructionsModal = document.getElementById('instructions-modal');
     const instructionsButton = document.getElementById('instructions-button');
     const closeInstructions = document.getElementById('close-instructions');
-
-    startForm.addEventListener('submit', function(event) {
-      event.preventDefault();
-      const playerName = encodeURIComponent(document.getElementById('player-name').value);
-      const roomId = encodeURIComponent(document.getElementById('room-id').value);
-      const playerSign = document.getElementById('player-sign').value;
-      const gameLink = `${location.origin}/game.html?room=${roomId}&name=${playerName}&sign=${playerSign}`;
-      window.location.href = gameLink; // Redirect to the game with the room ID
-    });
 
     instructionsButton.addEventListener('click', () => {
       instructionsModal.classList.remove('hidden');
