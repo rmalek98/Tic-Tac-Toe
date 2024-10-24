@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tic-Tac-Toe Game</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
@@ -36,7 +37,7 @@
   <h1 class="text-4xl font-bold mb-4">Tic-Tac-Toe</h1>
 
   <!-- Instructions Button -->
-  <button id="instructions-button" class="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded mb-4">
+  <button id="instructions-button" class="bg-gray-700 text-white p-2 rounded mb-4">
     How to Play
   </button>
 
@@ -50,21 +51,9 @@
       <p class="mb-4">
         To start a game, share the game link or room ID with a friend. The winner of each round gets to restart the game. If there's a tie, the last winner can restart.
       </p>
-      <button id="close-instructions" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">Close</button>
+      <button id="close-instructions" class="mt-4 bg-blue-500 text-white p-2 rounded">Close</button>
     </div>
   </div>
-
-  <!-- Check if the player has a name -->
-  {% if not name %}
-  <!-- Name Entry Form -->
-  <div class="bg-gray-900 p-6 rounded-lg w-full max-w-lg mb-4">
-    <h2 class="text-2xl mb-4">Enter Your Name</h2>
-    <form method="POST" class="flex flex-col space-y-4">
-      <input type="text" name="name" class="p-2 bg-gray-700 text-white rounded" placeholder="Enter your name" required>
-      <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">Join Game</button>
-    </form>
-  </div>
-  {% endif %}
 
   <!-- Room and Player Info -->
   <div class="w-full max-w-lg flex justify-around mb-4 text-center">
@@ -91,10 +80,10 @@
 
   <!-- Controls and Share Link -->
   <div class="mt-4 flex flex-col items-center">
-    <button id="restart" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded mb-4">Restart Game</button>
+    <button id="restart" class="bg-blue-500 text-white p-2 rounded mb-4">Restart Game</button>
     <div class="flex items-center">
-      <button id="share-button" class="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded mr-2">Share to Play</button>
-      <button id="copy-link" class="ml-2 text-white hover:text-gray-300">
+      <button id="share-button" class="bg-gray-700 text-white p-2 rounded mr-2">Share to Play</button>
+      <button id="copy-link" class="ml-2 text-white">
         <!-- Copy Icon -->
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <!-- ... (Same as before) ... -->
@@ -106,8 +95,8 @@
 
   <!-- Additional Controls Section -->
   <div class="mt-4 flex flex-col items-center">
-    <button id="clear-memory" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded mb-4">Clear Memory</button>
-    <button id="view-rooms" class="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded mb-4">Back to Home</button>
+    <button id="clear-memory" class="bg-red-500 text-white p-2 rounded mb-4">Clear Memory</button>
+    <button id="view-rooms" class="bg-gray-700 text-white p-2 rounded mb-4">View Saved Rooms</button>
   </div>
 
   <!-- Chat Section -->
@@ -120,10 +109,17 @@
   <!-- Notification Modal -->
   <div id="notification-modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
     <div class="bg-white p-6 rounded-lg text-black text-center">
-      <p id="notification-message" class="text-xl mb-4"></p>
-      <div id="notification-buttons">
-        <!-- Buttons will be injected here -->
-      </div>
+      <p id="notification-message" class="text-xl"></p>
+      <button id="close-notification" class="mt-4 bg-blue-500 text-white p-2 rounded">Close</button>
+    </div>
+  </div>
+
+  <!-- Saved Rooms Modal -->
+  <div id="saved-rooms-modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+    <div class="bg-white p-6 rounded-lg text-black text-center max-w-md">
+      <h2 class="text-2xl mb-4">Saved Rooms and Players</h2>
+      <ul id="saved-rooms-list" class="list-disc text-left"></ul>
+      <button id="close-saved-rooms" class="mt-4 bg-blue-500 text-white p-2 rounded">Close</button>
     </div>
   </div>
 
@@ -158,7 +154,7 @@
     // Share link functionality
     const shareButton = document.getElementById('share-button');
     const copyLinkButton = document.getElementById('copy-link');
-    const shareLink = `${location.origin}/game?room=${room}&sign=${opponentSign}`;
+    const shareLink = `${location.origin}/game?room=${room}&name=YourName&sign=${opponentSign}`;
 
     shareButton.addEventListener('click', () => {
       showNotification(`Share this link with your friend to play: ${shareLink}`);
@@ -230,25 +226,25 @@
           document.getElementById('your-streak').innerText = yourStreak;
           lastWinner = playerName;
           localStorage.setItem('lastWinner', lastWinner);
-          showNotification(`Congratulations ${playerName}, you win!`, true);
+          showNotification(`Congratulations ${playerName}, you win!`);
         } else {
           opponentStreak++;
           localStorage.setItem('opponentStreak', opponentStreak);
           document.getElementById('opponent-streak').innerText = opponentStreak;
           lastWinner = opponentName;
           localStorage.setItem('lastWinner', lastWinner);
-          showNotification(`${opponentName} wins the game!`, true);
+          showNotification(`${opponentName} wins the game!`);
         }
         highlightWinningCells(winner);
         roundsPlayed++;
         localStorage.setItem('roundsPlayed', roundsPlayed);
         if (roundsPlayed >= maxRounds) {
-          showNotification("Max rounds reached. Do you want to play again?", true);
+          showNotification("Max rounds reached. Do you want to play again?");
         } else {
           offerRematch();
         }
       } else if (board.every(cell => cell !== null)) {
-        showNotification("It's a tie! Last winner can restart the game.", true);
+        showNotification("It's a tie! Last winner can restart the game.");
         offerRematch();
       } else {
         currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
@@ -288,45 +284,44 @@
       }
     }
 
-    // Show notification with optional rematch buttons
-    function showNotification(message, showButtons = false) {
+    // Show notification
+    function showNotification(message) {
       document.getElementById('notification-message').innerText = message;
-      const notificationButtons = document.getElementById('notification-buttons');
-      notificationButtons.innerHTML = ''; // Clear previous buttons
-      if (showButtons) {
-        const yesButton = document.createElement('button');
-        yesButton.innerText = 'Yes';
-        yesButton.classList.add('bg-blue-500', 'hover:bg-blue-600', 'text-white', 'p-2', 'rounded', 'mr-2');
-        yesButton.addEventListener('click', () => {
-          document.getElementById('notification-modal').classList.add('hidden');
-          socket.emit('restart_game', { room });
-        });
-
-        const noButton = document.createElement('button');
-        noButton.innerText = 'No';
-        noButton.classList.add('bg-red-500', 'hover:bg-red-600', 'text-white', 'p-2', 'rounded');
-        noButton.addEventListener('click', () => {
-          document.getElementById('notification-modal').classList.add('hidden');
-          // Optionally, navigate back to home or clear the game
-        });
-
-        notificationButtons.appendChild(yesButton);
-        notificationButtons.appendChild(noButton);
-      } else {
-        const closeButton = document.createElement('button');
-        closeButton.innerText = 'Close';
-        closeButton.classList.add('bg-blue-500', 'hover:bg-blue-600', 'text-white', 'p-2', 'rounded');
-        closeButton.addEventListener('click', () => {
-          document.getElementById('notification-modal').classList.add('hidden');
-        });
-        notificationButtons.appendChild(closeButton);
-      }
       document.getElementById('notification-modal').classList.remove('hidden');
+    }
+
+    document.getElementById('close-notification').addEventListener('click', () => {
+      document.getElementById('notification-modal').classList.add('hidden');
+    });
+
+    // Save Room Info to localStorage
+    function saveRoomInfo(room, playerName, playerSign) {
+      const savedRooms = JSON.parse(localStorage.getItem('savedRooms')) || [];
+      const roomInfo = { room, playerName, playerSign, date: new Date().toLocaleString() };
+      savedRooms.push(roomInfo);
+      localStorage.setItem('savedRooms', JSON.stringify(savedRooms));
     }
 
     // View Saved Rooms and Players
     document.getElementById('view-rooms').addEventListener('click', () => {
-      window.location.href = '/'; // Navigate back to the index page
+      const savedRooms = JSON.parse(localStorage.getItem('savedRooms')) || [];
+      const savedRoomsList = document.getElementById('saved-rooms-list');
+      savedRoomsList.innerHTML = ''; // Clear the list
+      if (savedRooms.length === 0) {
+        savedRoomsList.innerHTML = '<li>No saved rooms found.</li>';
+      } else {
+        savedRooms.forEach((roomInfo) => {
+          const roomItem = document.createElement('li');
+          roomItem.textContent = `Room: ${roomInfo.room}, Player: ${roomInfo.playerName} (${roomInfo.playerSign}), Date: ${roomInfo.date}`;
+          savedRoomsList.appendChild(roomItem);
+        });
+      }
+      document.getElementById('saved-rooms-modal').classList.remove('hidden');
+    });
+
+    // Close the saved rooms modal
+    document.getElementById('close-saved-rooms').addEventListener('click', () => {
+      document.getElementById('saved-rooms-modal').classList.add('hidden');
     });
 
     // Clear local storage
@@ -336,22 +331,47 @@
     });
 
     // Chat functionality
-    // ... (Same as before) ...
+    const chatInput = document.getElementById('chat-input');
+    const chatBox = document.getElementById('chat-box');
+
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+        const message = chatInput.value.trim();
+        socket.emit('chat', { room, message, sender: playerName });
+        chatInput.value = '';
+      }
+    });
+
+    socket.on('new_chat', (data) => {
+      const messageElement = document.createElement('p');
+      messageElement.innerHTML = `<strong>${data.sender}:</strong> ${data.message}`;
+      chatBox.appendChild(messageElement);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    // Clear chat on refresh
+    window.onbeforeunload = function() {
+      localStorage.removeItem('chatHistory');
+    };
 
     // Instructions Modal Functionality
-    // ... (Same as before) ...
+    const instructionsModal = document.getElementById('instructions-modal');
+    const instructionsButton = document.getElementById('instructions-button');
+    const closeInstructions = document.getElementById('close-instructions');
+
+    instructionsButton.addEventListener('click', () => {
+      instructionsModal.classList.remove('hidden');
+    });
+
+    closeInstructions.addEventListener('click', () => {
+      instructionsModal.classList.add('hidden');
+    });
 
     // Offer Rematch
     function offerRematch() {
-      showNotification("Do you want to play another round?", true);
-    }
-
-    // Save Room Info to localStorage
-    function saveRoomInfo(room, playerName, playerSign) {
-      const savedRooms = JSON.parse(localStorage.getItem('savedRooms')) || [];
-      const roomInfo = { room, playerName, playerSign, date: new Date().toLocaleString() };
-      savedRooms.push(roomInfo);
-      localStorage.setItem('savedRooms', JSON.stringify(savedRooms));
+      // You can implement additional logic here to prompt for a rematch
+      // For now, we just notify the players
+      showNotification("Do you want to play another round?");
     }
   </script>
 </body>
