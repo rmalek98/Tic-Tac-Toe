@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tic-Tac-Toe Game</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
   <style>
-    /* Additional mobile styling */
+    /* Ensure a responsive board */
     #board {
       grid-template-columns: repeat(3, minmax(80px, 1fr));
     }
@@ -26,9 +26,6 @@
         padding: 1rem;
         font-size: 2rem;
       }
-      #chat-input {
-        font-size: 1rem;
-      }
     }
   </style>
 </head>
@@ -36,29 +33,50 @@
   <!-- Game Title -->
   <h1 class="text-4xl font-bold mb-4">Tic-Tac-Toe</h1>
 
-  <!-- Instructions Button -->
+  <!-- (Optional) Instructions Button & Modal -->
   <button id="instructions-button" class="bg-gray-700 text-white p-2 rounded mb-4">
     How to Play
   </button>
-
-  <!-- Instructions Modal -->
   <div id="instructions-modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
     <div class="bg-white p-6 rounded-lg text-black text-center max-w-md">
       <h2 class="text-2xl mb-4">How to Play</h2>
       <p class="mb-4">
-        Tic-Tac-Toe is a two-player game. The player who succeeds in placing three of their marks in a horizontal, vertical, or diagonal row wins the game.
-      </p>
-      <p class="mb-4">
-        To start a game, share the game link or room ID with a friend. The winner of each round gets to restart the game. If there's a tie, the last winner can restart.
+        Tic-Tac-Toe is a two-player game. To play, share the game link with your friend so they can join.
+        When it's your turn, click on an empty cell. Three in a row wins the round!
       </p>
       <button id="close-instructions" class="mt-4 bg-blue-500 text-white p-2 rounded">Close</button>
+    </div>
+  </div>
+
+  <!-- Join Modal for Opponent Name (if shared link has a placeholder name) -->
+  <div id="join-modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+    <div class="bg-white p-6 rounded-lg text-black text-center max-w-md">
+      <h2 class="text-2xl mb-4">Join Game</h2>
+      <p class="mb-4">Please enter your name to join the game:</p>
+      <input type="text" id="join-name-input" class="w-full p-2 border rounded mb-4" placeholder="Your Name">
+      <div class="flex justify-around">
+        <button id="join-submit" class="bg-green-500 text-white p-2 rounded">Join</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rematch Modal -->
+  <div id="rematch-modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+    <div class="bg-white p-6 rounded-lg text-black text-center max-w-md">
+      <h2 class="text-2xl mb-4">Rematch</h2>
+      <p class="mb-4">Would you like to play another round?</p>
+      <div class="flex justify-around">
+        <button id="rematch-yes" class="bg-green-500 text-white p-2 rounded">Yes</button>
+        <button id="rematch-leave" class="bg-red-500 text-white p-2 rounded">Leave</button>
+      </div>
     </div>
   </div>
 
   <!-- Room and Player Info -->
   <div class="w-full max-w-lg flex justify-around mb-4 text-center">
     <div>
-      <p id="your-info">{{ name }} ({{ sign }}): <span id="your-streak">0</span> Streak</p>
+      <p id="your-info">{{ name }} ({{ sign }})</p>
+      <p>Streak: <span id="your-streak">0</span></p>
     </div>
     <div>
       <p id="opponent-info">Waiting for opponent...</p>
@@ -66,7 +84,7 @@
     </div>
   </div>
 
-  <!-- Room ID -->
+  <!-- Room ID Display -->
   <div class="w-full text-center mb-4">
     <p>Room ID: <span id="room-id">{{ room }}</span></p>
   </div>
@@ -74,36 +92,27 @@
   <!-- Game Board -->
   <div id="board" class="grid grid-cols-3 gap-2 w-full max-w-sm mx-auto">
     {% for i in range(9) %}
-    <div class="cell border p-4 cursor-pointer text-3xl bg-gray-700" id="cell-{{ i }}"></div>
+      <div class="cell border p-4 cursor-pointer text-3xl bg-gray-700" id="cell-{{ i }}"></div>
     {% endfor %}
   </div>
 
-  <!-- Controls and Share Link -->
-  <div class="mt-4 flex flex-col items-center">
-    <button id="restart" class="bg-blue-500 text-white p-2 rounded mb-4">Restart Game</button>
-    <div class="flex items-center">
-      <button id="share-button" class="bg-gray-700 text-white p-2 rounded mr-2">Share to Play</button>
-      <button id="copy-link" class="ml-2 text-white">
-        <!-- Copy Icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <!-- ... (Same as before) ... -->
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4m0 0l4-4m-4 4H3" />
-        </svg>
-      </button>
+  <!-- Main Controls: Restart and Share -->
+  <div class="mt-6 flex space-x-4">
+    <button id="restart" class="bg-blue-500 text-white p-2 rounded">Restart Game</button>
+    <button id="share-button" class="bg-green-500 text-white p-2 rounded">Share</button>
+  </div>
+
+  <!-- Share Modal -->
+  <div id="share-modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+    <div class="bg-white p-6 rounded-lg text-black text-center max-w-md">
+      <h2 class="text-2xl mb-4">Share this Game</h2>
+      <p class="mb-4">Copy the link below to invite your friend:</p>
+      <div class="flex items-center justify-center mb-4">
+        <input type="text" id="share-link-input" class="w-3/4 p-2 border rounded" readonly />
+        <button id="copy-share-link" class="ml-2 bg-blue-500 text-white p-2 rounded">Copy</button>
+      </div>
+      <button id="close-share-modal" class="mt-4 bg-gray-700 text-white p-2 rounded">Close</button>
     </div>
-  </div>
-
-  <!-- Additional Controls Section -->
-  <div class="mt-4 flex flex-col items-center">
-    <button id="clear-memory" class="bg-red-500 text-white p-2 rounded mb-4">Clear Memory</button>
-    <button id="view-rooms" class="bg-gray-700 text-white p-2 rounded mb-4">View Saved Rooms</button>
-  </div>
-
-  <!-- Chat Section -->
-  <div class="mt-6 w-full max-w-lg">
-    <h3 class="text-2xl mb-4">Chat</h3>
-    <div id="chat-box" class="bg-gray-900 p-4 h-40 overflow-y-scroll mb-2"></div>
-    <input type="text" id="chat-input" class="w-full p-2 bg-gray-700 text-white" placeholder="Type a message..." autocomplete="off">
   </div>
 
   <!-- Notification Modal -->
@@ -114,20 +123,20 @@
     </div>
   </div>
 
-  <!-- Saved Rooms Modal -->
-  <div id="saved-rooms-modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
-    <div class="bg-white p-6 rounded-lg text-black text-center max-w-md">
-      <h2 class="text-2xl mb-4">Saved Rooms and Players</h2>
-      <ul id="saved-rooms-list" class="list-disc text-left"></ul>
-      <button id="close-saved-rooms" class="mt-4 bg-blue-500 text-white p-2 rounded">Close</button>
-    </div>
+  <!-- Chat Section -->
+  <div class="mt-6 w-full max-w-lg">
+    <h3 class="text-2xl mb-4">Chat</h3>
+    <div id="chat-box" class="bg-gray-900 p-4 h-40 overflow-y-scroll mb-2"></div>
+    <input type="text" id="chat-input" class="w-full p-2 bg-gray-700 text-white" placeholder="Type a message..." autocomplete="off">
   </div>
 
   <!-- JavaScript -->
   <script>
-    const room = "{{ room }}";
-    const playerName = "{{ name }}";
+    // Basic player/room info from template variables
+    // (Note: if the shared link contains the placeholder name "YourName", we ask for a proper name)
+    let playerName = "{{ name }}";
     const playerSign = "{{ sign }}";
+    const room = "{{ room }}";
 
     let opponentName = '';
     let opponentSign = playerSign === 'X' ? 'O' : 'X';
@@ -138,35 +147,44 @@
     let roundsPlayed = parseInt(localStorage.getItem('roundsPlayed')) || 0;
     const maxRounds = 10;
     let lastWinner = localStorage.getItem('lastWinner') || '';
+    let rematchResponse = null;
+    let opponentRematchResponse = null;
 
-    // Update UI with player info
+    // Update UI with initial info
     document.getElementById('your-streak').innerText = yourStreak;
     document.getElementById('room-id').innerText = room;
 
     // Socket.io initialization
     const socket = io.connect();
 
-    socket.emit('join', { room, playerName, playerSign });
+    // Function to emit join event
+    function joinGame() {
+      socket.emit('join', { room, playerName, playerSign });
+      document.getElementById('your-info').innerText = `${playerName} (${playerSign})`;
+    }
 
-    // Save Room Info
-    saveRoomInfo(room, playerName, playerSign);
+    // If playerName is the placeholder, show join modal for name entry.
+    if (playerName === "YourName") {
+      document.getElementById('join-modal').classList.remove('hidden');
+    } else {
+      joinGame();
+    }
 
-    // Share link functionality
-    const shareButton = document.getElementById('share-button');
-    const copyLinkButton = document.getElementById('copy-link');
+    document.getElementById('join-submit').addEventListener('click', () => {
+      const joinName = document.getElementById('join-name-input').value.trim();
+      if (joinName !== "") {
+        playerName = joinName;
+        document.getElementById('join-modal').classList.add('hidden');
+        joinGame();
+      }
+    });
+
+    // Share link (using a placeholder for the joining player's name; the opponent will be prompted)
     const shareLink = `${location.origin}/game?room=${room}&name=YourName&sign=${opponentSign}`;
 
-    shareButton.addEventListener('click', () => {
-      showNotification(`Share this link with your friend to play: ${shareLink}`);
-    });
+    // --- Event Listeners ---
 
-    copyLinkButton.addEventListener('click', () => {
-      navigator.clipboard.writeText(shareLink).then(() => {
-        showNotification('Link copied to clipboard!');
-      });
-    });
-
-    // Handle cell clicks
+    // Board cell click: send move if it's your turn
     document.querySelectorAll('.cell').forEach((cell, idx) => {
       cell.addEventListener('click', () => {
         if (!board[idx] && currentPlayer === playerSign) {
@@ -178,7 +196,7 @@
       });
     });
 
-    // Receive updates from server
+    // Listen for board updates from the server
     socket.on('update_board', (data) => {
       if (data.sign !== playerSign) {
         board[data.index] = data.sign;
@@ -187,7 +205,7 @@
       }
     });
 
-    // Handle player joined
+    // When an opponent joins
     socket.on('player_joined', (data) => {
       if (data.playerName !== playerName) {
         opponentName = data.playerName;
@@ -198,13 +216,9 @@
       }
     });
 
-    // Restart game functionality
+    // Immediate restart button (if needed)
     document.getElementById('restart').addEventListener('click', () => {
-      if (lastWinner === playerName || lastWinner === '') {
-        socket.emit('restart_game', { room });
-      } else {
-        showNotification(`${lastWinner} gets to restart the game.`);
-      }
+      socket.emit('restart_game', { room });
     });
 
     socket.on('game_restarted', () => {
@@ -216,7 +230,8 @@
       currentPlayer = 'X';
     });
 
-    // Check game status
+    // --- Game Logic ---
+
     function checkGameStatus() {
       const winner = checkWinner();
       if (winner) {
@@ -238,20 +253,15 @@
         highlightWinningCells(winner);
         roundsPlayed++;
         localStorage.setItem('roundsPlayed', roundsPlayed);
-        if (roundsPlayed >= maxRounds) {
-          showNotification("Max rounds reached. Do you want to play again?");
-        } else {
-          offerRematch();
-        }
+        showRematchModal();
       } else if (board.every(cell => cell !== null)) {
-        showNotification("It's a tie! Last winner can restart the game.");
-        offerRematch();
+        showNotification("It's a tie!");
+        showRematchModal();
       } else {
         currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
       }
     }
 
-    // Check for a winner
     function checkWinner() {
       const winningCombinations = [
         [0,1,2], [3,4,5], [6,7,8],
@@ -267,7 +277,6 @@
       return null;
     }
 
-    // Highlight winning cells
     function highlightWinningCells(winnerSign) {
       const winningCombinations = [
         [0,1,2], [3,4,5], [6,7,8],
@@ -284,7 +293,75 @@
       }
     }
 
-    // Show notification
+    // --- Rematch Modal Functionality ---
+
+    function showRematchModal() {
+      document.getElementById('rematch-modal').classList.remove('hidden');
+    }
+    function hideRematchModal() {
+      document.getElementById('rematch-modal').classList.add('hidden');
+    }
+
+    document.getElementById('rematch-yes').addEventListener('click', () => {
+      rematchResponse = 'yes';
+      socket.emit('rematch_response', { room, sender: playerName, response: 'yes' });
+      hideRematchModal();
+      showNotification("Waiting for opponent's response...");
+    });
+
+    document.getElementById('rematch-leave').addEventListener('click', () => {
+      rematchResponse = 'leave';
+      socket.emit('rematch_response', { room, sender: playerName, response: 'leave' });
+      hideRematchModal();
+      showNotification("You left the game.");
+    });
+
+    socket.on('rematch_response', (data) => {
+      if (data.sender !== playerName) {
+        opponentRematchResponse = data.response;
+        if (opponentRematchResponse === 'leave') {
+          showNotification("Opponent left the game.");
+        } else if (opponentRematchResponse === 'yes' && rematchResponse === 'yes') {
+          // Both players agreed to rematch
+          socket.emit('start_rematch', { room });
+        }
+      }
+    });
+
+    socket.on('rematch_start', () => {
+      board = Array(9).fill(null);
+      document.querySelectorAll('.cell').forEach(cell => {
+        cell.innerText = '';
+        cell.classList.remove('bg-green-500');
+      });
+      currentPlayer = 'X';
+      rematchResponse = null;
+      opponentRematchResponse = null;
+      showNotification("Rematch starting!");
+    });
+
+    // --- Share Modal Functionality ---
+
+    document.getElementById('share-button').addEventListener('click', () => {
+      document.getElementById('share-link-input').value = shareLink;
+      document.getElementById('share-modal').classList.remove('hidden');
+    });
+
+    document.getElementById('copy-share-link').addEventListener('click', () => {
+      const shareInput = document.getElementById('share-link-input');
+      shareInput.select();
+      shareInput.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(shareInput.value).then(() => {
+        showNotification("Link copied to clipboard!");
+      });
+    });
+
+    document.getElementById('close-share-modal').addEventListener('click', () => {
+      document.getElementById('share-modal').classList.add('hidden');
+    });
+
+    // --- Notification Modal Functionality ---
+
     function showNotification(message) {
       document.getElementById('notification-message').innerText = message;
       document.getElementById('notification-modal').classList.remove('hidden');
@@ -294,43 +371,22 @@
       document.getElementById('notification-modal').classList.add('hidden');
     });
 
-    // Save Room Info to localStorage
-    function saveRoomInfo(room, playerName, playerSign) {
-      const savedRooms = JSON.parse(localStorage.getItem('savedRooms')) || [];
-      const roomInfo = { room, playerName, playerSign, date: new Date().toLocaleString() };
-      savedRooms.push(roomInfo);
-      localStorage.setItem('savedRooms', JSON.stringify(savedRooms));
-    }
+    // --- Instructions Modal Functionality ---
 
-    // View Saved Rooms and Players
-    document.getElementById('view-rooms').addEventListener('click', () => {
-      const savedRooms = JSON.parse(localStorage.getItem('savedRooms')) || [];
-      const savedRoomsList = document.getElementById('saved-rooms-list');
-      savedRoomsList.innerHTML = ''; // Clear the list
-      if (savedRooms.length === 0) {
-        savedRoomsList.innerHTML = '<li>No saved rooms found.</li>';
-      } else {
-        savedRooms.forEach((roomInfo) => {
-          const roomItem = document.createElement('li');
-          roomItem.textContent = `Room: ${roomInfo.room}, Player: ${roomInfo.playerName} (${roomInfo.playerSign}), Date: ${roomInfo.date}`;
-          savedRoomsList.appendChild(roomItem);
-        });
-      }
-      document.getElementById('saved-rooms-modal').classList.remove('hidden');
+    const instructionsModal = document.getElementById('instructions-modal');
+    const instructionsButton = document.getElementById('instructions-button');
+    const closeInstructions = document.getElementById('close-instructions');
+
+    instructionsButton.addEventListener('click', () => {
+      instructionsModal.classList.remove('hidden');
     });
 
-    // Close the saved rooms modal
-    document.getElementById('close-saved-rooms').addEventListener('click', () => {
-      document.getElementById('saved-rooms-modal').classList.add('hidden');
+    closeInstructions.addEventListener('click', () => {
+      instructionsModal.classList.add('hidden');
     });
 
-    // Clear local storage
-    document.getElementById('clear-memory').addEventListener('click', () => {
-      localStorage.clear();
-      location.reload(); // Refresh the page to clear all in-game data
-    });
+    // --- Chat Functionality ---
 
-    // Chat functionality
     const chatInput = document.getElementById('chat-input');
     const chatBox = document.getElementById('chat-box');
 
@@ -348,31 +404,6 @@
       chatBox.appendChild(messageElement);
       chatBox.scrollTop = chatBox.scrollHeight;
     });
-
-    // Clear chat on refresh
-    window.onbeforeunload = function() {
-      localStorage.removeItem('chatHistory');
-    };
-
-    // Instructions Modal Functionality
-    const instructionsModal = document.getElementById('instructions-modal');
-    const instructionsButton = document.getElementById('instructions-button');
-    const closeInstructions = document.getElementById('close-instructions');
-
-    instructionsButton.addEventListener('click', () => {
-      instructionsModal.classList.remove('hidden');
-    });
-
-    closeInstructions.addEventListener('click', () => {
-      instructionsModal.classList.add('hidden');
-    });
-
-    // Offer Rematch
-    function offerRematch() {
-      // You can implement additional logic here to prompt for a rematch
-      // For now, we just notify the players
-      showNotification("Do you want to play another round?");
-    }
   </script>
 </body>
 </html>

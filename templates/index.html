@@ -16,11 +16,16 @@
 <body class="bg-gray-800 text-white flex flex-col items-center min-h-screen p-4">
   <h1 class="text-4xl font-bold mb-4">Tic-Tac-Toe</h1>
 
+  <!-- New Game Form -->
   <div class="bg-gray-900 p-6 rounded-lg w-full max-w-lg">
     <h2 class="text-2xl mb-4">Start a New Game</h2>
     <form method="POST" class="flex flex-col space-y-4">
+      <!-- Name input remains -->
       <input type="text" name="name" class="p-2 bg-gray-700 text-white rounded" placeholder="Enter your name" required>
-      <input type="text" name="room" class="p-2 bg-gray-700 text-white rounded" placeholder="Enter or create a room ID" required>
+      
+      <!-- Room input removed since roomID is auto-generated on the server -->
+
+      <!-- Sign selection -->
       <select name="sign" class="p-2 bg-gray-700 text-white rounded" required>
         <option value="" disabled selected>Select your sign</option>
         <option value="X">X</option>
@@ -28,7 +33,18 @@
       </select>
       <button type="submit" class="bg-blue-500 text-white p-2 rounded">Start Game</button>
     </form>
+    <p class="text-gray-400 text-sm mt-2">
+      A unique room ID will be automatically generated. Share the game link with your opponent to join the game.
+    </p>
   </div>
+
+  <!-- Previous Local Games Section -->
+  <!-- <div class="bg-gray-900 p-6 rounded-lg w-full max-w-lg mt-8">
+    <h2 class="text-2xl mb-4">Previous Local Games</h2>
+    <ul id="previous-games-list" class="space-y-2">
+  
+    </ul>
+  </div> -->
 
   <!-- Instructions Button -->
   <div class="mt-6">
@@ -39,14 +55,19 @@
   <div id="instructions-modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
     <div class="bg-white p-6 rounded-lg text-black max-w-md">
       <h2 class="text-2xl mb-4">Game Instructions</h2>
-      <p class="mb-4">Start by entering your name, room ID, and choosing your sign (X or O). You'll receive a link to share with your opponent, who can join the game by entering the same room ID and their name.</p>
-      <p class="mb-4">The winner of each round gets to restart the game. If it's a tie, the last winner can restart. After 10 rounds, players will be asked if they want to continue.</p>
+      <p class="mb-4">
+        Start by entering your name and choosing your sign (X or O). A unique game link will be created automatically, which you can share with your opponent.
+      </p>
+      <p class="mb-4">
+        The winner of each round gets to restart the game. If it's a tie, the last winner can restart. After 10 rounds, players will be asked if they want to continue.
+      </p>
       <button id="close-instructions" class="mt-4 bg-blue-500 text-white p-2 rounded">Close</button>
     </div>
   </div>
 
   <!-- JavaScript -->
   <script>
+    // Instructions modal logic
     const instructionsModal = document.getElementById('instructions-modal');
     const instructionsButton = document.getElementById('instructions-button');
     const closeInstructions = document.getElementById('close-instructions');
@@ -57,6 +78,26 @@
 
     closeInstructions.addEventListener('click', () => {
       instructionsModal.classList.add('hidden');
+    });
+
+    // Load previous local games from localStorage and display them
+    document.addEventListener('DOMContentLoaded', () => {
+      const gamesList = document.getElementById('previous-games-list');
+      // Retrieve saved games from localStorage (or default to an empty array)
+      const previousGames = JSON.parse(localStorage.getItem('previousGames')) || [];
+
+      if (previousGames.length === 0) {
+        const noGamesItem = document.createElement('li');
+        noGamesItem.textContent = "No previous games found.";
+        gamesList.appendChild(noGamesItem);
+      } else {
+        previousGames.forEach(game => {
+          // Each game is assumed to have 'name' and 'opponent' properties
+          const li = document.createElement('li');
+          li.textContent = `Game: ${game.name} vs ${game.opponent}`;
+          gamesList.appendChild(li);
+        });
+      }
     });
   </script>
 </body>
